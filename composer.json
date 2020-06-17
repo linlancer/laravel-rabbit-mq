@@ -1,0 +1,45 @@
+{
+    "name": "linlancer/laravel-rabbit-mq",
+    "description": "rabbitMQ library for laravel",
+    "type": "library",
+    "require": {
+        "php-amqplib/php-amqplib": "^2.11",
+        "illuminate/database": "5.8.*",
+        "illuminate/support": "5.8.*",
+        "illuminate/queue": "5.8.*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "7.0",
+        "illuminate/database": "5.8.*",
+        "illuminate/support": "5.8.*",
+        "illuminate/queue": "5.8.*"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "linsen",
+            "email": "3003286703@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "LinLancer\\Laravel\\RabbitMQ\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LinLancer\\Laravel\\RabbitMQ\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "8.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "LinLancer\\Laravel\\RabbitMQ\\LaravelQueueRabbitMQServiceProvider"
+            ]
+        }
+    }
+}
