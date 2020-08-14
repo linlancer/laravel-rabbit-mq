@@ -11,7 +11,9 @@ namespace LinLancer\Laravel\RabbitMQ;
 
 use Illuminate\Queue\Queue;
 use Illuminate\Contracts\Queue\Queue as QueueInterface;
+use LinLancer\Laravel\RabbitMQ\AMQP\MessageConfiguration;
 use PhpAmqpLib\Channel\AMQPChannel;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitMQQueue extends Queue implements QueueInterface
 {
@@ -21,6 +23,8 @@ class RabbitMQQueue extends Queue implements QueueInterface
     private $channel;
 
     private $config;
+
+    private $fromQueue;
 
     public function __construct(AMQPChannel $channel, array $config)
     {
@@ -36,7 +40,7 @@ class RabbitMQQueue extends Queue implements QueueInterface
      */
     public function size($queue = null): int
     {
-        list(, $messageCount) = $this->channel->queue_declare();
+        list(, $messageCount) = $this->channel->queue_declare($queue, false, true, false, false);
         return intval($messageCount);
     }
 
@@ -51,10 +55,17 @@ class RabbitMQQueue extends Queue implements QueueInterface
     public function push($job, $data = '', $queue = null)
     {
         if ($job instanceof ForRabbitMQ) {
+            /**
+             * @var AbstractRabbitMQ $job
+             */
             $job->setBody($data);
             $message = $job->getMessage();
             $this->channel->basic_publish($message, $job->getExchange(), $job->getRouteKey());
+            return $job->getConfiguration()->getMessageId();
+        } else {
+            return $this->pushRaw($this->createPayload($job, $queue, $data), $queue, []);
         }
+
     }
 
     /**
@@ -67,7 +78,11 @@ class RabbitMQQueue extends Queue implements QueueInterface
      */
     public function pushRaw($payload, $queue = null, array $options = [])
     {
-        // TODO: Implement pushRaw() method.
+        $config = new MessageConfiguration($options);
+        $message = new AMQPMessage($payload, $config->toArray());
+
+        $this->channel->basic_publish($message, '', $queue);
+        return $config->getMessageId();
     }
 
     /**
@@ -92,6 +107,16 @@ class RabbitMQQueue extends Queue implements QueueInterface
      */
     public function pop($queue = null)
     {
-        // TODO: Implement pop() method.
+        $message = $this->channel->basic_get($queue);
+        if (is_null($message))
+            return $message;
+        $this->fromQueue = $queue;
+        return new RabbitMQJob($this, $this->channel, $message);
     }
+
+    public function getFromQueue()
+    {
+        return $this->fromQueue;
+    }
+
 }

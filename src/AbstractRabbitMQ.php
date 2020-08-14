@@ -25,11 +25,16 @@ abstract class AbstractRabbitMQ implements ForRabbitMQ
 
     protected $options = [];
 
+    /**
+     * @var MessageConfiguration
+     */
+    protected $configuration;
+
     public function getMessage(): AMQPMessage
     {
         $body = new MessageBody($this->body);
-        $config = new MessageConfiguration($this->options);
-        return new AMQPMessage($body->toJson(), $config->toArray());
+        $this->configuration = new MessageConfiguration($this->options);
+        return new AMQPMessage($body->toJson(), $this->configuration->toArray());
     }
 
     public function setBody(string $body)
@@ -54,5 +59,17 @@ abstract class AbstractRabbitMQ implements ForRabbitMQ
     public function setRouteKey(string $value)
     {
         $this->routeKey = $value;
+    }
+
+    public function setExpiredOn($timestamp)
+    {
+        $this->getConfiguration()->setExpiration(strval($timestamp));
+    }
+    /**
+     * @return MessageConfiguration
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
     }
 }
